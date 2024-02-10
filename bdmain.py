@@ -10,7 +10,6 @@ class MainInterface:
         self.root = root
         self.root.title("kursovaya")
 
-        # Подключение к PostgreSQL
         self.connection = psycopg2.connect(
             database="kursach3",
             user="postgres",
@@ -22,20 +21,16 @@ class MainInterface:
 
         self.button_complex_query = tk.Button(root, text="Отчет", command=self.show_complex_query_window)
         self.button_save_to_excel = tk.Button(root, text="Сохранить в Excel", command=self.save_to_excel)
-        # Создание и заполнение выпадающего списка таблиц
         self.tables_label = tk.Label(root, text="Выберите таблицу:")
         self.tables_combobox = ttk.Combobox(root, values=self.get_table_names())
         self.tables_combobox.bind("<<ComboboxSelected>>", self.load_table_data)
 
-        # Создание Treeview для отображения данных таблицы
         self.tree = ttk.Treeview(root)
         self.tree.grid(row=1, column=0, columnspan=4, pady=10)
 
-        # Кнопка для обновления данных
         self.button_refresh = tk.Button(root, text="Обновить", command=self.load_table_data)
         self.button_refresh.grid(row=2, column=0, padx=5)
 
-        # Кнопки для управления данными
         self.button_frame = tk.Frame(root)
         self.button_frame.grid(row=2, column=1, columnspan=3, pady=10)
 
@@ -44,7 +39,6 @@ class MainInterface:
         self.button_update = tk.Button(self.button_frame, text="Изменить", command=self.update_data)
         self.button_delete = tk.Button(self.button_frame, text="Удалить", command=self.delete_data)
 
-        # Расположение элементов на форме
         self.tables_label.grid(row=0, column=0, padx=10, pady=10)
         self.tables_combobox.grid(row=0, column=1, padx=10, pady=10)
         self.button_view.grid(row=0, column=2, padx=5)
@@ -65,11 +59,9 @@ class MainInterface:
             self.cursor.execute(f"SELECT * FROM {table_name}")
             data = self.cursor.fetchall()
 
-            # Очистка предыдущих записей в Treeview
             self.tree.delete(*self.tree.get_children())
 
             if data:
-                # Загрузка данных в Treeview только если есть данные
                 columns = [column[0] for column in self.cursor.description]
                 self.tree["columns"] = columns
                 for col in columns:
@@ -80,7 +72,6 @@ class MainInterface:
                     self.tree.insert("", tk.END, values=row)
 
     def get_data_from_tree(self):
-        # Получение выделенной строки из Treeview
         selected_item = self.tree.selection()
         if selected_item:
             return self.tree.item(selected_item, "values")
@@ -108,17 +99,14 @@ class MainInterface:
         if table_name:
             data = self.get_data_from_tree()
             if data:
-                # Получаем список столбцов
                 columns = [column[0] for column in self.cursor.description]
 
-                # Пример использования simpledialog для получения новых значений
                 new_values = []
                 for column in columns:
                     new_value = simpledialog.askstring("Изменение данных", f"Введите новое значение для {column}:")
                     if new_value is not None:
                         new_values.append(new_value)
 
-                # Ваш код для обновления данных в базе данных
                 if new_values:
                     update_query = f"UPDATE {table_name} SET {', '.join([f'{column}=%s' for column in columns])} WHERE {columns[0]}=%s"
                     self.cursor.execute(update_query, tuple(new_values + [data[0]]))
@@ -147,15 +135,12 @@ class MainInterface:
                 messagebox.showinfo("Удаление данных", "Выберите запись для удаления")
 
     def show_complex_query_window(self):
-        # Создание нового окна для ввода сложного запроса
         complex_query_window = tk.Toplevel(self.root)
         complex_query_window.title("Отчет")
 
-        # Многострочное текстовое поле для ввода SQL-запроса
         query_text = scrolledtext.ScrolledText(complex_query_window, wrap=tk.WORD, width=40, height=10)
         query_text.grid(row=0, column=0, padx=10, pady=10)
 
-        # Выпадающий список с выбором запроса
         query_options = [
             "Запрос 1",
             "Запрос 2",
@@ -168,14 +153,12 @@ class MainInterface:
         query_combobox.set("Выберите запрос")
         query_combobox.grid(row=0, column=1, padx=10, pady=10)
 
-        # Кнопка для выполнения сложного запроса
         execute_button = tk.Button(complex_query_window, text="Выполнить отчет",
                                    command=lambda: self.execute_complex_query(query_combobox.get(), query_text.get("1.0", tk.END)))
         execute_button.grid(row=1, column=0, columnspan=2, pady=10)
 
     def execute_complex_query(self, selected_query, query):
         try:
-            # Выполнение выбранного запроса
             if selected_query == "Запрос 1":
                 result = self.query1()
             elif selected_query == "Запрос 2":
@@ -191,43 +174,35 @@ class MainInterface:
             else:
                 result = None
 
-            # Отображение результата запроса
             if result:
                 self.display_result(result)
         except Exception as e:
             messagebox.showerror("Ошибка выполнения запроса", f"Произошла ошибка: {e}")
 
     def display_result(self, result):
-        # Используем prettytable для форматирования данных
         table = prettytable.PrettyTable()
         table.field_names = [desc[0] for desc in self.cursor.description]
         table.add_rows(result)
 
-        # Создаем новое окно для отображения результата
         result_window = tk.Toplevel(self.root)
         result_window.title("Результат запроса")
 
-        # Создаем текстовое поле для вывода отформатированных данных
         result_text = tk.Text(result_window, wrap=tk.WORD, width=80, height=20)
         result_text.insert(tk.END, str(table))
         result_text.config(state=tk.DISABLED)
         result_text.pack(padx=10, pady=10)
 
-        # Прокрутка текстового поля
         scroll = tk.Scrollbar(result_window, command=result_text.yview)
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
         result_text.config(yscrollcommand=scroll.set)
 
     def save_to_excel(self):
-        # Открываем окно с запросами для выбора запроса
         complex_query_window = tk.Toplevel(self.root)
         complex_query_window.title("Сохранение в Excel")
 
-        # Многострочное текстовое поле для ввода SQL-запроса
         query_text = scrolledtext.ScrolledText(complex_query_window, wrap=tk.WORD, width=40, height=10)
         query_text.grid(row=0, column=0, padx=10, pady=10)
 
-        # Выпадающий список с выбором запроса
         query_options = [
             "Запрос 1",
             "Запрос 2",
@@ -240,7 +215,6 @@ class MainInterface:
         query_combobox.set("Выберите запрос")
         query_combobox.grid(row=0, column=1, padx=10, pady=10)
 
-        # Кнопка для выполнения запроса и сохранения в Excel
         execute_button = tk.Button(complex_query_window, text="Сохранить в Excel",
                                    command=lambda: self.save_query_to_excel(query_combobox.get(),
                                                                             query_text.get("1.0", tk.END)))
@@ -248,7 +222,6 @@ class MainInterface:
 
     def save_query_to_excel(self, selected_query, query):
         try:
-            # Выполнение выбранного запроса
             result = None
             if selected_query == "Запрос 1":
                 result = self.query1()
@@ -263,16 +236,12 @@ class MainInterface:
             elif selected_query == "Запрос 6":
                 result = self.query6()
 
-            # Если результат получен, сохраняем его в Excel
             if result:
-                # Создаем DataFrame из результата запроса
                 df = pd.DataFrame(result)
 
-                # Открываем окно сохранения файла
                 file_path = filedialog.asksaveasfilename(defaultextension=".xlsx",
                                                             filetypes=[("Файлы Excel", "*.xlsx")])
                 if file_path:
-                    # Сохраняем DataFrame в Excel
                     df.to_excel(file_path, index=False)
                     messagebox.showinfo("Сохранение в Excel", "Результат успешно сохранен в Excel")
 
@@ -285,9 +254,7 @@ class MainInterface:
 
     def open_excel_file(self, file_path):
         try:
-            # Проверяем, существует ли файл
             if os.path.exists(file_path):
-                # Открываем файл с использованием системного приложения по умолчанию
                 os.system(f'start excel "{file_path}"')
             else:
                 messagebox.showwarning("Файл не найден", "Файл не существует.")
