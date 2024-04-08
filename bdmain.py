@@ -11,11 +11,11 @@ class MainInterface:
         self.root.title("kursovaya")
 
         self.connection = psycopg2.connect(
-            database="kursach3",
-            user="postgres",
-            password="20133102es",
-            host="localhost",
-            port="5432"
+            database="",
+            user="",
+            password="",
+            host="",
+            port=""
         )
         self.cursor = self.connection.cursor()
 
