@@ -5,11 +5,11 @@ from bdmain import MainInterface
 
 # Создание подключения к PostgreSQL
 connection = psycopg2.connect(
-    database="kursach3",
-    user="postgres",
-    password="20133102es",
-    host="localhost",
-    port="5432"
+    database="",
+    user="",
+    password="",
+    host="",
+    port=""
 )
 cursor = connection.cursor()
 
